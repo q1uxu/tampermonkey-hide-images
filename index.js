@@ -1,8 +1,8 @@
 // ==UserScript==
-// @name         网页图片隐藏与缩放工具 (单标签独立版)
+// @name         网页图片隐藏与缩放工具 (纯域名限定版)
 // @namespace    http://tampermonkey.net/
-// @version      1.1
-// @description  通过快捷键切换图片的显示模式，仅对当前标签页生效：隐藏、完全不占位、缩小50%、恢复原状
+// @version      1.2
+// @description  通过快捷键切换图片的显示模式。仅在非IP、非localhost的正式域名网页下生效。
 // @author       Your Name
 // @match        *://*/*
 // @grant        none
@@ -12,12 +12,23 @@
 (function () {
     "use strict";
 
+    // ================= 域名过滤逻辑 =================
+    const hostname = window.location.hostname;
+
+    // 1. 排除 localhost
+    if (hostname === "localhost") {
+        return;
+    }
+
+    // 2. 排除 IPv4 和 IPv6 纯 IP 地址的正则表达式
+    const ipPattern = /^(?:(?:\d{1,3}\.){3}\d{1,3}|\[[a-fA-F0-9:]+\])$/;
+    if (ipPattern.test(hostname)) {
+        return; // 如果是纯 IP 地址，直接退出脚本，不执行后续逻辑
+    }
+    // ================================================
+
     // ================= 配置区域 =================
     // 默认快捷键配置：
-    // key: 按键值 (例如 'z', 'x', 'ArrowUp' 等)
-    // alt: 是否需要按下 Alt 键
-    // ctrl: 是否需要按下 Ctrl 键
-    // shift: 是否需要按下 Shift 键
     const DEFAULT_CONFIG = {
         key: "z",
         alt: true,
@@ -49,7 +60,6 @@
 
     // 应用样式的核心函数
     function applyStyleToImage(img) {
-        // 备份原始样式（仅在第一次处理该图片时处理）
         if (img.dataset.origVisibility === undefined)
             img.dataset.origVisibility = img.style.visibility || "";
         if (img.dataset.origDisplay === undefined)
@@ -96,9 +106,7 @@
         currentMode = (currentMode + 1) % 4;
         sessionStorage.setItem("current_img_mode", currentMode);
 
-        // 弹出轻量级提示
         showToast(`[当前标签] 图片模式已切换至: ${MODE_LABELS[currentMode]}`);
-
         processAllImages();
     }
 
@@ -106,7 +114,6 @@
     window.addEventListener(
         "keydown",
         function (e) {
-            // 排除用户正在输入框输入的情况
             if (
                 e.target.tagName === "INPUT" ||
                 e.target.tagName === "TEXTAREA" ||
@@ -115,7 +122,6 @@
                 return;
             }
 
-            // 匹配快捷键
             if (
                 e.key.toLowerCase() === DEFAULT_CONFIG.key.toLowerCase() &&
                 e.altKey === DEFAULT_CONFIG.alt &&
@@ -129,7 +135,7 @@
         true,
     );
 
-    // 监听动态生成的图片（如下载滚动、懒加载）
+    // 监听动态生成的图片
     const observer = new MutationObserver((mutations) => {
         mutations.forEach((mutation) => {
             mutation.addedNodes.forEach((node) => {
@@ -154,7 +160,7 @@
         observer.observe(document.body, { childList: true, subtree: true });
     }
 
-    // 极其简易的提示框组件
+    // 提示框组件
     function showToast(text) {
         let toast = document.getElementById("tm-img-toast");
         if (!toast) {
