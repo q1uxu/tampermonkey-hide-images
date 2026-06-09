@@ -49,8 +49,10 @@
     };
 
     // 使用 sessionStorage 实现单标签页隔离，默认为正常模式
+    // 定义一个独一无二的命名空间键名，彻底杜绝与网页自身冲突
+    const STORAGE_KEY = "__tm_img_hider_private_mode_state__";
     let currentMode = parseInt(
-        sessionStorage.getItem("current_img_mode") || MODES.NORMAL,
+        sessionStorage.getItem(STORAGE_KEY) || MODES.NORMAL,
         10,
     );
 
@@ -78,7 +80,7 @@
     function switchMode() {
         currentMode =
             currentMode === MODES.NORMAL ? MODES.HIDDEN : MODES.NORMAL;
-        sessionStorage.setItem("current_img_mode", currentMode);
+        sessionStorage.setItem(STORAGE_KEY, currentMode);
 
         showToast(`[当前标签] ${MODE_LABELS[currentMode]}`);
         processAllImages();
