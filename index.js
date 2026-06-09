@@ -1,8 +1,8 @@
 // ==UserScript==
-// @name         网页图片隐藏与缩放工具 (纯域名限定版)
+// @name         网页图片隐藏工具 (精简双模式版)
 // @namespace    http://tampermonkey.net/
-// @version      1.2
-// @description  通过快捷键切换图片的显示模式。仅在非IP、非localhost的正式域名网页下生效。
+// @version      1.3
+// @description  通过快捷键 Alt+Z 在“正常显示”和“隐藏占位(visibility:hidden)”之间快速切换。仅在非IP、非localhost的正式域名网页下生效。
 // @author       Your Name
 // @match        *://*/*
 // @grant        none
@@ -20,15 +20,15 @@
         return;
     }
 
-    // 2. 排除 IPv4 和 IPv6 纯 IP 地址的正则表达式
+    // 2. 排除 IPv4 和 IPv6 纯 IP 地址
     const ipPattern = /^(?:(?:\d{1,3}\.){3}\d{1,3}|\[[a-fA-F0-9:]+\])$/;
     if (ipPattern.test(hostname)) {
-        return; // 如果是纯 IP 地址，直接退出脚本，不执行后续逻辑
+        return;
     }
     // ================================================
 
     // ================= 配置区域 =================
-    // 默认快捷键配置：
+    // 默认快捷键配置
     const DEFAULT_CONFIG = {
         key: "z",
         alt: true,
@@ -37,19 +37,15 @@
     };
     // ============================================
 
-    // 4 种模式定义
+    // 仅保留 2 种模式
     const MODES = {
         NORMAL: 0, // 不对图片进行操作（默认）
         HIDDEN: 1, // visibility: 'hidden' (隐藏但占位)
-        NONE: 2, // display: 'none' (隐藏且不占位)
-        SCALE: 3, // 图片缩小 50%
     };
 
     const MODE_LABELS = {
         [MODES.NORMAL]: "恢复正常",
-        [MODES.HIDDEN]: "隐藏占位 (visibility: hidden)",
-        [MODES.NONE]: "完全隐藏 (display: none)",
-        [MODES.SCALE]: "缩小 50%",
+        [MODES.HIDDEN]: "已隐藏图片 (保留占位)",
     };
 
     // 使用 sessionStorage 实现单标签页隔离，默认为正常模式
@@ -60,38 +56,15 @@
 
     // 应用样式的核心函数
     function applyStyleToImage(img) {
-        if (img.dataset.origVisibility === undefined)
+        // 备份原始样式（仅在第一次处理该图片时处理）
+        if (img.dataset.origVisibility === undefined) {
             img.dataset.origVisibility = img.style.visibility || "";
-        if (img.dataset.origDisplay === undefined)
-            img.dataset.origDisplay = img.style.display || "";
-        if (img.dataset.origTransform === undefined)
-            img.dataset.origTransform = img.style.transform || "";
-        if (img.dataset.origTransformOrigin === undefined)
-            img.dataset.origTransformOrigin = img.style.transformOrigin || "";
+        }
 
-        switch (currentMode) {
-            case MODES.NORMAL:
-                img.style.visibility = img.dataset.origVisibility;
-                img.style.display = img.dataset.origDisplay;
-                img.style.transform = img.dataset.origTransform;
-                img.style.transformOrigin = img.dataset.origTransformOrigin;
-                break;
-            case MODES.HIDDEN:
-                img.style.visibility = "hidden";
-                img.style.display = img.dataset.origDisplay;
-                img.style.transform = img.dataset.origTransform;
-                break;
-            case MODES.NONE:
-                img.style.display = "none";
-                img.style.visibility = img.dataset.origVisibility;
-                img.style.transform = img.dataset.origTransform;
-                break;
-            case MODES.SCALE:
-                img.style.visibility = img.dataset.origVisibility;
-                img.style.display = img.dataset.origDisplay;
-                img.style.transform = "scale(0.5)";
-                img.style.transformOrigin = "center center";
-                break;
+        if (currentMode === MODES.HIDDEN) {
+            img.style.visibility = "hidden";
+        } else {
+            img.style.visibility = img.dataset.origVisibility;
         }
     }
 
@@ -101,12 +74,13 @@
         imgs.forEach((img) => applyStyleToImage(img));
     }
 
-    // 切换到下一个模式
+    // 切换模式（在 0 和 1 之间来回切）
     function switchMode() {
-        currentMode = (currentMode + 1) % 4;
+        currentMode =
+            currentMode === MODES.NORMAL ? MODES.HIDDEN : MODES.NORMAL;
         sessionStorage.setItem("current_img_mode", currentMode);
 
-        showToast(`[当前标签] 图片模式已切换至: ${MODE_LABELS[currentMode]}`);
+        showToast(`[当前标签] ${MODE_LABELS[currentMode]}`);
         processAllImages();
     }
 

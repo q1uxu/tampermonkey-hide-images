@@ -8,8 +8,6 @@ It is written by Google Gmini, see https://gemini.google.com/share/9330c01d9cef
 const MODES = {
     NORMAL: 0, // 不对图片进行操作（默认）
     HIDDEN: 1, // visibility: 'hidden' (隐藏但占位)
-    NONE: 2, // display: 'none' (隐藏且不占位)
-    SCALE: 3, // 图片缩小 50%
 };
 ```
 
