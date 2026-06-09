@@ -6,8 +6,8 @@ It is written by Google Gmini, see https://gemini.google.com/share/9330c01d9cef
 ## Mode
 ```javascript
 const MODES = {
-    NORMAL: 0, // 不对图片进行操作（默认）
-    HIDDEN: 1, // visibility: 'hidden' (隐藏但占位)
+    NORMAL: 0, // show images（default）
+    HIDDEN: 1, // visibility: 'hidden' (hide images)
 };
 ```
 

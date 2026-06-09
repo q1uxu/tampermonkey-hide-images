@@ -4,6 +4,7 @@
 // @version      1.3
 // @description  通过快捷键 Alt+Z 在“正常显示”和“隐藏占位”之间快速切换。仅在非IP、非localhost的正式域名网页下生效，单标签页独立生效。
 // @author       q1uxu
+// @license      MIT
 // @match        *://*/*
 // @grant        none
 // @run-at       document-start
