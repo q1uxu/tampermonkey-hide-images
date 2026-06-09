@@ -1,13 +1,11 @@
 // ==UserScript==
-// @name         网页图片隐藏与缩放工具
+// @name         网页图片隐藏与缩放工具 (单标签独立版)
 // @namespace    http://tampermonkey.net/
-// @version      1.0
-// @description  通过快捷键切换图片的显示模式：隐藏、完全不占位、缩小50%、恢复原状
+// @version      1.1
+// @description  通过快捷键切换图片的显示模式，仅对当前标签页生效：隐藏、完全不占位、缩小50%、恢复原状
 // @author       Your Name
 // @match        *://*/*
-// @grant        GM_setValue
-// @grant        GM_getValue
-// @grant        GM_registerMenuCommand
+// @grant        none
 // @run-at       document-start
 // ==/UserScript==
 
@@ -43,8 +41,11 @@
         [MODES.SCALE]: "缩小 50%",
     };
 
-    // 从存储中获取当前模式，默认为正常模式
-    let currentMode = GM_getValue("current_img_mode", MODES.NORMAL);
+    // 使用 sessionStorage 实现单标签页隔离，默认为正常模式
+    let currentMode = parseInt(
+        sessionStorage.getItem("current_img_mode") || MODES.NORMAL,
+        10,
+    );
 
     // 应用样式的核心函数
     function applyStyleToImage(img) {
@@ -79,7 +80,7 @@
                 img.style.visibility = img.dataset.origVisibility;
                 img.style.display = img.dataset.origDisplay;
                 img.style.transform = "scale(0.5)";
-                img.style.transformOrigin = "center center"; // 居中缩小，可改为 'left top'
+                img.style.transformOrigin = "center center";
                 break;
         }
     }
@@ -93,10 +94,10 @@
     // 切换到下一个模式
     function switchMode() {
         currentMode = (currentMode + 1) % 4;
-        GM_setValue("current_img_mode", currentMode);
+        sessionStorage.setItem("current_img_mode", currentMode);
 
-        // 弹出轻量级提示（可选，不想要可以注释掉）
-        showToast(`图片模式已切换至: ${MODE_LABELS[currentMode]}`);
+        // 弹出轻量级提示
+        showToast(`[当前标签] 图片模式已切换至: ${MODE_LABELS[currentMode]}`);
 
         processAllImages();
     }
@@ -142,11 +143,16 @@
         });
     });
 
-    // 页面加载完成后启动监听
-    document.addEventListener("DOMContentLoaded", () => {
+    // 页面加载完成后启动
+    if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", () => {
+            processAllImages();
+            observer.observe(document.body, { childList: true, subtree: true });
+        });
+    } else {
         processAllImages();
         observer.observe(document.body, { childList: true, subtree: true });
-    });
+    }
 
     // 极其简易的提示框组件
     function showToast(text) {
@@ -165,7 +171,4 @@
             toast.style.opacity = "0";
         }, 2000);
     }
-
-    // 在脚本菜单中添加一个手动切换的按钮（点油猴图标可见）
-    GM_registerMenuCommand("手动切换图片模式", switchMode);
 })();
