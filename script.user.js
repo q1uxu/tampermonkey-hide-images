@@ -1,8 +1,8 @@
 // ==UserScript==
-// @name         网页图片隐藏工具 (精简双模式版)
+// @name         网页图片/视频隐藏工具 (精简双模式版)
 // @namespace    https://github.com/q1uxu/tampermonkey-hide-images
-// @version      1.3
-// @description  通过快捷键 Alt+Z 在“正常显示”和“隐藏占位”之间快速切换。仅在非IP、非localhost的正式域名网页下生效，单标签页独立生效。
+// @version      1.4
+// @description  通过快捷键 Alt+Z 在“正常显示”和“隐藏图片/视频占位”之间快速切换。仅在非IP、非localhost的正式域名网页下生效，单标签页独立生效。
 // @author       q1uxu
 // @license      MIT
 // @match        *://*/*
@@ -40,41 +40,43 @@
 
     // 仅保留 2 种模式
     const MODES = {
-        NORMAL: 0, // 不对图片进行操作（默认）
-        HIDDEN: 1, // visibility: 'hidden' (隐藏但占位)
+        NORMAL: 0, // 不对图片/视频进行操作（默认）
+        HIDDEN: 1, // visibility: 'hidden' (隐藏图片/视频但占位)
     };
 
     const MODE_LABELS = {
         [MODES.NORMAL]: "恢复正常",
-        [MODES.HIDDEN]: "已隐藏图片 (保留占位)",
+        [MODES.HIDDEN]: "已隐藏图片/视频 (保留占位)",
     };
 
     // 使用 sessionStorage 实现单标签页隔离，默认为正常模式
     // 定义一个独一无二的命名空间键名，彻底杜绝与网页自身冲突
-    const STORAGE_KEY = "__tm_img_hider_private_mode_state__";
+    const STORAGE_KEY = "__tm_media_hider_private_mode_state__";
     let currentMode = parseInt(
         sessionStorage.getItem(STORAGE_KEY) || MODES.NORMAL,
         10,
     );
 
+    const MEDIA_SELECTOR = "img, video";
+
     // 应用样式的核心函数
-    function applyStyleToImage(img) {
-        // 备份原始样式（仅在第一次处理该图片时处理）
-        if (img.dataset.origVisibility === undefined) {
-            img.dataset.origVisibility = img.style.visibility || "";
+    function applyStyleToMedia(media) {
+        // 备份原始样式（仅在第一次处理该元素时处理）
+        if (media.dataset.origVisibility === undefined) {
+            media.dataset.origVisibility = media.style.visibility || "";
         }
 
         if (currentMode === MODES.HIDDEN) {
-            img.style.visibility = "hidden";
+            media.style.visibility = "hidden";
         } else {
-            img.style.visibility = img.dataset.origVisibility;
+            media.style.visibility = media.dataset.origVisibility;
         }
     }
 
-    // 处理页面上的所有图片
-    function processAllImages() {
-        const imgs = document.querySelectorAll("img");
-        imgs.forEach((img) => applyStyleToImage(img));
+    // 处理页面上的所有图片和视频
+    function processAllMedia() {
+        const mediaElements = document.querySelectorAll(MEDIA_SELECTOR);
+        mediaElements.forEach((media) => applyStyleToMedia(media));
     }
 
     // 切换模式（在 0 和 1 之间来回切）
@@ -84,7 +86,7 @@
         sessionStorage.setItem(STORAGE_KEY, currentMode);
 
         showToast(`[当前标签] ${MODE_LABELS[currentMode]}`);
-        processAllImages();
+        processAllMedia();
     }
 
     // 快捷键监听
@@ -112,16 +114,20 @@
         true,
     );
 
-    // 监听动态生成的图片
+    // 监听动态生成的图片和视频
     const observer = new MutationObserver((mutations) => {
         mutations.forEach((mutation) => {
             mutation.addedNodes.forEach((node) => {
-                if (node.tagName === "IMG") {
-                    applyStyleToImage(node);
-                } else if (node.querySelectorAll) {
-                    const imgs = node.querySelectorAll("img");
-                    imgs.forEach((img) => applyStyleToImage(img));
+                if (!(node instanceof Element)) {
+                    return;
                 }
+
+                if (node.matches(MEDIA_SELECTOR)) {
+                    applyStyleToMedia(node);
+                }
+
+                const mediaElements = node.querySelectorAll(MEDIA_SELECTOR);
+                mediaElements.forEach((media) => applyStyleToMedia(media));
             });
         });
     });
@@ -129,20 +135,20 @@
     // 页面加载完成后启动
     if (document.readyState === "loading") {
         document.addEventListener("DOMContentLoaded", () => {
-            processAllImages();
+            processAllMedia();
             observer.observe(document.body, { childList: true, subtree: true });
         });
     } else {
-        processAllImages();
+        processAllMedia();
         observer.observe(document.body, { childList: true, subtree: true });
     }
 
     // 提示框组件
     function showToast(text) {
-        let toast = document.getElementById("tm-img-toast");
+        let toast = document.getElementById("tm-media-toast");
         if (!toast) {
             toast = document.createElement("div");
-            toast.id = "tm-img-toast";
+            toast.id = "tm-media-toast";
             toast.style.cssText =
                 "position:fixed;bottom:20px;right:20px;background:rgba(0,0,0,0.8);color:#fff;padding:8px 16px;border-radius:4px;z-index:999999;font-size:14px;pointer-events:none;transition:opacity 0.3s;";
             document.body.appendChild(toast);

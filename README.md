@@ -1,13 +1,13 @@
-# Tampermonkey Hide Images
+# Tampermonkey Hide Images and Videos
 
-This is a tampermonkey script for web page to hide images by **alt + z**.  
+This is a tampermonkey script for web page to hide images and videos by **alt + z**.  
 It is written by Google Gmini, see https://gemini.google.com/share/9330c01d9cef
 
 ## Mode
 ```javascript
 const MODES = {
-    NORMAL: 0, // show images（default）
-    HIDDEN: 1, // visibility: 'hidden' (hide images)
+    NORMAL: 0, // show images/videos（default）
+    HIDDEN: 1, // visibility: 'hidden' (hide images/videos)
 };
 ```
 
