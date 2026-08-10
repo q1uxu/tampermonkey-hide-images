@@ -1,6 +1,6 @@
 # Tampermonkey Hide Images and Videos
 
-This is a tampermonkey script for web page to hide images and videos by **alt + z**.  
+This is a tampermonkey script for web page to hide images and videos by **ctrl + alt + shift + z**.  
 It is written by Google Gmini, see https://gemini.google.com/share/9330c01d9cef
 
 ## Mode
@@ -12,13 +12,13 @@ const MODES = {
 ```
 
 ## keyboard shortcuts
-Default is **alt + z**, you can change it by yourself.
+Default is **ctrl + alt + shift + z**, you can change it by yourself.
 ```javascript
 const DEFAULT_CONFIG = {
-    key: 'z',
+    key: "z",
     alt: true,
-    ctrl: false,
-    shift: false
+    ctrl: true,
+    shift: true,
 };
 ```
 

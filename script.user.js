@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         网页图片/视频隐藏工具 (精简双模式版)
 // @namespace    https://github.com/q1uxu/tampermonkey-hide-images
-// @version      1.4
+// @version      1.5
 // @description  通过快捷键 Alt+Z 在“正常显示”和“隐藏图片/视频占位”之间快速切换。仅在非IP、非localhost的正式域名网页下生效，单标签页独立生效。
 // @author       q1uxu
 // @license      MIT
@@ -33,8 +33,8 @@
     const DEFAULT_CONFIG = {
         key: "z",
         alt: true,
-        ctrl: false,
-        shift: false,
+        ctrl: true,
+        shift: true,
     };
     // ============================================
 
